@@ -156,7 +156,7 @@ def get_match_id(values):
 def insert_score(values):
     command = """INSERT INTO scores(name,points,bonuses,details,number,track,match_id) VALUES(%s, %s, %s, %s, %s,%s, %s);"""
     conn = None
-    if not check_if_match_exist(values[0], values[1], values[4]):
+    if not check_if_score_exists(values[0], values[6]):
         try:
             # read the connection parameters
             params = config()
@@ -164,7 +164,7 @@ def insert_score(values):
             conn = psycopg2.connect(**params)
             cur = conn.cursor()
             # create table one by one
-            cur.execute(command, (values[0], values[1], values[2], str(values[3]), values[4]))
+            cur.execute(command, (values[0], values[1], values[2], values[3], values[4], values[5], values[6]))
             conn.commit()
             # close communication with the PostgreSQL database server
             cur.close()
@@ -174,4 +174,30 @@ def insert_score(values):
             if conn is not None:
                 conn.close()
     else:
-        print("Match already exists")
+        print("Score already exists")
+
+
+def check_if_score_exists(rider_name, match_id):
+    command = """SELECT * FROM scores WHERE name=%s AND match_id=%s;"""
+    conn = None
+    score = None
+    try:
+        # read the connection parameters
+        params = config()
+        # connect to the PostgreSQL server
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        # create table one by one
+        cur.execute(command, (rider_name, match_id))
+        score = cur.fetchall()
+        # close communication with the PostgreSQL database server
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+    if score:
+        return True
+    else:
+        return False

@@ -17,7 +17,7 @@ def get_matches_from_season(site):
     return matches_links, matches
 
 
-def get_riders_points(riders_scores):
+def get_riders_points(riders_scores, track, match_id):
     for i in riders_scores[:]:
         if i[1] == "brak" or i[2] == "ns":
             riders_scores.remove(i)
@@ -36,6 +36,7 @@ def get_riders_points(riders_scores):
 
         details_points = rider[3]
         heats = len(details_points.split(','))
+        database.insert_score((name, points, bonuses, details_points, number, track, match_id))
         print(name, full_points, points, bonuses, details_points, heats)
 
 
@@ -52,12 +53,23 @@ def get_all_scores(page_content):
     return team1_scores, team2_scores
 
 
-def get_teams(page_content):
+def get_teams(page_content, date, season):
     teams = page_content.find('title')
     teams = teams.text.split(' - ')
     team1 = teams[0]
     team2 = teams[1]
-    return team1, team2
+    database.insert_match((team1, team2, 'Ekstraliga', season, date))
+    id = database.get_match_id((team1, date))
+    return team1, id
+
+
+def get_date(page_content):
+    date = page_content.find('strong')
+    date = date.text.split(':')
+    date = date[1].split('-')
+    date = [i.replace(u'\xa0', '') for i in date]
+    date = date[2]+'-'+date[1]+'-'+date[0]
+    return date
 
 
 def scrapping():
@@ -67,15 +79,16 @@ def scrapping():
         page = requests.get(match)
         soup = BeautifulSoup(page.content, 'html.parser')
         home_scores, away_scores = get_all_scores(soup)
-        home_team, away_team = get_teams(soup)
-        print(home_team, away_team)
-        get_riders_points(home_scores)
-        get_riders_points(away_scores)
+        date = get_date(soup)
+        home_team, match_id = get_teams(soup, date, season='2019')
+        get_riders_points(home_scores, home_team, match_id)
+        get_riders_points(away_scores, home_team, match_id)
 
 
 if __name__ == "__main__":
-    #database.create_tables()
-    database.insert_match(('Bydgoszcz', 'Toruń', '1liga', '2020','2021-08-20'))
+    # database.create_tables()
+    database.insert_match(('Bydgoszcz', 'Toruń', '1liga', '2020', '2021-08-20'))
     print(database.get_match_id(('Bydgoszcz', '2021-08-20')))
-    #scrapping()
+    database.insert_score(('Woźniak', '3', '1', '(1,2,0,0)', '2', 'Bydgoszcz', '5'))
+    scrapping()
     pass
