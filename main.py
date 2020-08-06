@@ -19,11 +19,17 @@ def get_matches_from_season(site):
 
 def get_riders_points(riders_scores, track, match_id):
     for i in riders_scores[:]:
-        if i[1] == "brak" or i[2] == "ns":
+        if not i[0].isnumeric():
+            riders_scores.remove(i)
+        elif i[1] == "brak" or i[2] == "ns" or i[2] == "zastępstwo" or i[3] == "zastępstwo":
             riders_scores.remove(i)
 
     for rider in riders_scores:
         number = rider[0]
+        if not rider[2][0].isnumeric():
+            rider[1] = rider[1]+' '+rider[2]
+            rider[2] = rider[3]
+            rider[3] = rider[4]
         name = rider[1]
         full_points = rider[2]
         if "+" in full_points:
@@ -73,16 +79,17 @@ def get_date(page_content):
 
 
 def scrapping():
-    matches_links, matches = get_matches_from_season("http://www.speedwayw.pl/pl_2019.htm")
+    for i in range(2015,2020):
+        matches_links, matches = get_matches_from_season("http://www.speedwayw.pl/pl_"+str(i)+".htm")
 
-    for match in matches_links:
-        page = requests.get(match)
-        soup = BeautifulSoup(page.content, 'html.parser')
-        home_scores, away_scores = get_all_scores(soup)
-        date = get_date(soup)
-        home_team, match_id = get_teams(soup, date, season='2019')
-        get_riders_points(home_scores, home_team, match_id)
-        get_riders_points(away_scores, home_team, match_id)
+        for match in matches_links:
+            page = requests.get(match)
+            soup = BeautifulSoup(page.content, 'html.parser')
+            home_scores, away_scores = get_all_scores(soup)
+            date = get_date(soup)
+            home_team, match_id = get_teams(soup, date, i)
+            get_riders_points(home_scores, home_team, match_id)
+            get_riders_points(away_scores, home_team, match_id)
 
 
 if __name__ == "__main__":

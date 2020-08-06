@@ -152,7 +152,6 @@ def get_match_id(values):
         return match_id[0][0]
 
 
-
 def insert_score(values):
     command = """INSERT INTO scores(name,points,bonuses,details,number,track,match_id) VALUES(%s, %s, %s, %s, %s,%s, %s);"""
     conn = None
