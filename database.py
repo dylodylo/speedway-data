@@ -200,3 +200,31 @@ def check_if_score_exists(rider_name, match_id):
         return True
     else:
         return False
+
+
+def delete_tables():
+    commands = (
+        """DROP TABLE IF EXISTS matches CASCADE""",
+        """DROP TABLE IF EXISTS scores CASCADE"""
+    )
+    conn = None
+    try:
+        # read the connection parameters
+        params = config()
+        # connect to the PostgreSQL server
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        # create table one by one
+        for command in commands:
+            cur.execute(command)
+            conn.commit()
+        # close communication with the PostgreSQL database server
+        cur.close()
+        # commit the changes
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
